@@ -1,30 +1,54 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Academic Study Notes</title>
     <style>
-        .hide { display: none; }
-        .row-img { max-width: 200px; }
+        :root { --main-c: #2c3e50; }
+        body { margin: 0; min-height: 100vh; display: flex; justify-content: center; align-items: center; background: var(--main-c); font-family: sans-serif; transition: 0.5s; overflow-x: hidden; }
+        .hide { display: none !important; }
+        /* 表面：学習用ノート風 */
+        #layer-a { text-align: center; cursor: pointer; width: 100%; }
+        .box-a { padding: 40px; width: 80%; max-width: 500px; background: white; border-radius: 20px; margin: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        #text-disp { font-size: 1.2rem; font-weight: bold; min-height: 100px; display: flex; align-items: center; justify-content: center; color: #333; }
+        #entry-point { position: fixed; bottom: 20px; right: 20px; opacity: 0.3; background: none; border: 1px solid white; color: white; border-radius: 10px; cursor: pointer; padding: 5px 10px; font-size: 0.7rem; }
+        /* 裏面：データアーカイブ風 */
+        #layer-b { width: 95%; max-width: 650px; background: #fff; padding: 20px; border-radius: 15px; margin: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .form-g { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; padding: 15px; border: 1px solid #eee; border-radius: 10px; }
+        input, textarea { padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+        .btn-s { padding: 10px; background: #34495e; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .row-item { padding: 12px; border-bottom: 1px solid #eee; }
+        .row-img { max-width: 100%; border-radius: 8px; margin-top: 8px; }
+        /* 管理画面（黒ベース） */
+        #layer-c { background: #000 !important; color: #0f0 !important; font-family: monospace; padding: 20px; border-radius: 15px; width: 95%; max-height: 80vh; overflow-y: auto; }
+        .m-item { border: 1px solid #0f0; padding: 8px; margin-bottom: 8px; font-size: 0.8rem; }
     </style>
 </head>
-<body>
-    <div id="layer-a" onclick="refreshMsg()">
-        <div id="text-disp"></div>
-        <div id="author-disp"></div>
-        <button onclick="startModule(event)">START</button>
+<body onclick="refreshMsg()">
+
+    <div id="layer-a">
+        <div class="box-a">
+            <div id="text-disp">Study Tool Loading...</div>
+            <div id="author-disp" style="color:#888; font-size:0.9rem; margin-top:10px;"></div>
+        </div>
+        <button id="entry-point" onclick="startModule(event)">STUDY_LOG</button>
     </div>
 
-    <div id="layer-b" class="hide">
-        <!-- 元のコードの通りm_tapをタイトルに設置 -->
-        <h3 onclick="m_tap()">MESSAGE_BOARD</h3>
-        <div id="auth-g">
+    <div id="layer-b" class="hide" onclick="event.stopPropagation()">
+        <h2 style="font-size:1.1rem;"><span id="trigger-m" onclick="m_tap()">👥</span> Data Archive Center</h2>
+        <div id="auth-g" class="form-g">
             <input type="text" id="uid" placeholder="UID">
-            <button onclick="process_auth()">LOGIN</button>
+            <input type="password" id="upw" placeholder="TOKEN">
+            <button class="btn-s" onclick="process_auth()">Access</button>
         </div>
         <div id="work-area" class="hide">
-            <input type="text" id="msg-input">
-            <input type="file" id="img-input">
-            <button onclick="save_log()">SEND</button>
+            <div class="form-g">
+                <textarea id="msg-input" placeholder="Notes..."></textarea>
+                <input type="file" id="img-input" accept="image/*">
+                <button class="btn-s" onclick="save_log()">Add Log</button>
+                <button onclick="location.reload()" style="font-size:0.7rem; margin-top:10px;">Exit</button>
+            </div>
             <div id="data-list"></div>
         </div>
     </div>
@@ -38,12 +62,11 @@
     </div>
 
     <script>
-        const K1 = "bmViYTcy"; 
-        const K2 = "bmViYW5lYmE3Mg==";
-        const d = [{t:"失敗は成功のもと", a:"ことわざ"}, {t:"あきらめたら試合終了", a:"安西先生"}, {t:"夢は逃げない", a:"高橋歩"},{ t: "だれも見ていなくても、星の輝きが減じることはない", a: "アリストテレス" },{ t: "私たちは多くの壁を立てているが、十分な橋をかけていない", a: "ニュートン" },{ t: "私は失敗したことがない。ただ、１万通りのうまくいかない方法を見つけただけだ。", a: "トーマス・エジソン" },{ t: "今日死ぬつもりで生き、永遠に生きるつもりで学べ", a: "ガンディー" },{ t: "賢い人とは、多くのことを知る人ではなく、大事なことを知る人である。", a: "アイスキュロス" },{ t: "自分の道を進め、人には勝手なことを言わせておけ", a: "ダンテ" },{ t: "一日を大切にせよ。その差が人生の差につながる。", a: "デカルト" },{ t: "I have no special talent. I am only passionately curious. (私には特別な才能などありません。ただ、ものすごく好奇心が強いだけです。)", a: "アインシュタイン" },{ t: "自分に打ち勝つことは、勝利のうちで最も偉大な勝利である", a: "プラトン" },{ t: "考えを新陳代謝させていく", a: "ニーチェ" },{ t: "小さいことを積み重ねることが、とんでもないところへ行くただひとつの道", a: "イチロー" },{ t: "ユナイテッドに移籍してから、僕は盗める物を何でも盗んでやろうと一生懸命努力した。そういう小さな積み重ねを成長って呼ぶんだ。", a: "クリスティアーノ・ロナウド" },{ t: "失敗することは耐えられるが、挑戦しないことは耐えられない。", a: "マイケル・ジョーダン" },{ t: "人を大切にする集団は必ず好循環を生み出し、強くなるだけでなく、人々に愛され憧れの集団になるんだと思う。", a: "五郎丸歩" },{ t: "満足しないことは、スキルを上げる一番のテクニックだ。", a: "ウェイン・グレツキー" },{ t: "出来ることを出し惜しみしてやっていてもつまらない。それは一生懸命ではない。", a: "羽生結弦" },{ t: "努力は必ず報われる。もし報われない努力があるのならば、それはまだ努力と呼べない。", a: "王貞治" },{ t: "あなたが生まれながらに持つ才能、能力は練習の積み重ねでしか開花しない。", a: "ウサイン・ボルト" },{ t: "人は失敗を繰り返して強くなるんです。迷うのなんか当たり前、成長している過程だと思えばいい。", a: "本田佑" },{ t: "努力は裏切らないという言葉は不正解。正しい場所で、正しい方向に向かって充分な量なされた努力は裏切らないが、正しい。", a: "林修" },{ t: "勉強するから、何をしたいか分かる。勉強しないから、何をしたいか分からない。", a: "ビートたけし" },{ t: "面倒くさいことを回避しては絶対に生きてゆけないの。頑張って、面倒くさいことを。", a: "マツコ・デラックス" },{ t: "とても長い年月「命のタスキ」をつないで、そして今やっと自分の所にある。それほど命は重い。", a: "中３道徳「命のたすき」より" },{ t: "知恵の９０％は、時間について賢くなることである。", a: "セオドア・ルーズベルト" },{ t: "できると決断しなさい。方法などは後から見つければいいのだ。", a: "リンカーン" }];
+        // 難読化パスワード（Base64）
+        const K1 = "bmViYTcy"; // neba72
+        const K2 = "bmViYW5lYmE3Mg=="; // nebaneba72
 
-        let tc = 0; // タップカウント
-        let tt;    // タイマー
+        const d = [{t:"失敗は成功のもと", a:"ことわざ"}, {t:"あきらめたら試合終了", a:"安西先生"}, {t:"夢は逃げない", a:"高橋歩"},{ t: "だれも見ていなくても、星の輝きが減じることはない", a: "アリストテレス" },{ t: "私たちは多くの壁を立てているが、十分な橋をかけていない", a: "ニュートン" },{ t: "私は失敗したことがない。ただ、１万通りのうまくいかない方法を見つけただけだ。", a: "トーマス・エジソン" },{ t: "今日死ぬつもりで生き、永遠に生きるつもりで学べ", a: "ガンディー" },{ t: "賢い人とは、多くのことを知る人ではなく、大事なことを知る人である。", a: "アイスキュロス" },{ t: "自分の道を進め、人には勝手なことを言わせておけ", a: "ダンテ" },{ t: "一日を大切にせよ。その差が人生の差につながる。", a: "デカルト" },{ t: "I have no special talent. I am only passionately curious. (私には特別な才能などありません。ただ、ものすごく好奇心が強いだけです。)", a: "アインシュタイン" },{ t: "自分に打ち勝つことは、勝利のうちで最も偉大な勝利である", a: "プラトン" },{ t: "考えを新陳代謝させていく", a: "ニーチェ" },{ t: "小さいことを積み重ねることが、とんでもないところへ行くただひとつの道", a: "イチロー" },{ t: "ユナイテッドに移籍してから、僕は盗める物を何でも盗んでやろうと一生懸命努力した。そういう小さな積み重ねを成長って呼ぶんだ。", a: "クリスティアーノ・ロナウド" },{ t: "失敗することは耐えられるが、挑戦しないことは耐えられない。", a: "マイケル・ジョーダン" },{ t: "人を大切にする集団は必ず好循環を生み出し、強くなるだけでなく、人々に愛され憧れの集団になるんだと思う。", a: "五郎丸歩" },{ t: "満足しないことは、スキルを上げる一番のテクニックだ。", a: "ウェイン・グレツキー" },{ t: "出来ることを出し惜しみしてやっていてもつまらない。それは一生懸命ではない。", a: "羽生結弦" },{ t: "努力は必ず報われる。もし報われない努力があるのならば、それはまだ努力と呼べない。", a: "王貞治" },{ t: "あなたが生まれながらに持つ才能、能力は練習の積み重ねでしか開花しない。", a: "ウサイン・ボルト" },{ t: "人は失敗を繰り返して強くなるんです。迷うのなんか当たり前、成長している過程だと思えばいい。", a: "本田圭佑" },{ t: "努力は裏切らないという言葉は不正解。正しい場所で、正しい方向に向かって充分な量なされた努力は裏切らないが、正しい。", a: "林修" },{ t: "勉強するから、何をしたいか分かる。勉強しないから、何をしたいか分からない。", a: "ビートたけし" },{ t: "面倒くさいことを回避しては絶対に生きてゆけないの。頑張って、面倒くさいことを。", a: "マツコ・デラックス" },{ t: "とても長い年月「命のタスキ」をつないで、そして今やっと自分の所にある。それほど命は重い。", a: "中３道徳「命のたすき」より" },{ t: "知恵の９０％は、時間について賢くなることである。", a: "セオドア・ルーズベルト" },{ t: "できると決断しなさい。方法などは後から見つければいいのだ。", a: "リンカーン" }];
 
         function refreshMsg(){
             const q = d[Math.floor(Math.random()*d.length)];
@@ -52,67 +75,49 @@
             document.body.style.background = ['#2c3e50','#2980b9','#27ae60','#16a085'][Math.floor(Math.random()*4)];
         }
 
-        const API_KEY = '$2a$10$.5ANZDvWg5x/x9g79uBPt.YVS1sWG01wo7Lu6lFnwHcoK8eYFjZee';
-        const BIN_ID = '6982891443b1c97be96337a5';
-        // 修正点：/v3/b/ を追加し、変数に $ をつける
-        const URL = `https://api.jsonbin.io{BIN_ID}`; 
-
         function startModule(e){
             e.stopPropagation();
-            // atob(K1) は "neba72" をデコードします
             if(prompt("Code?") === atob(K1)){
                 document.getElementById('layer-a').className = 'hide';
                 document.getElementById('layer-b').className = '';
                 document.body.style.background = "#ececec";
-            } else {
-                alert("Incorrect code.");
             }
         }
 
-
-        async function process_auth(){
+        function process_auth(){
             const id = document.getElementById('uid').value;
-            if(!id) return alert("UIDを入力してね");
+            const pw = document.getElementById('upw').value;
+            const u = JSON.parse(localStorage.getItem('_st_u')||'{}');
+            if(JSON.parse(localStorage.getItem('_st_b')||'[]').includes(id)) return alert("Denied");
+            if(!u[id]) u[id] = pw;
+            else if(u[id] !== pw) return alert("Error");
+            localStorage.setItem('_st_u', JSON.stringify(u));
             window._u = id;
             document.getElementById('auth-g').className = 'hide';
             document.getElementById('work-area').className = '';
             sync();
-            setInterval(sync, 5000);
         }
 
-        async function save_log(){
+        function save_log(){
             const m = document.getElementById('msg-input').value;
-            const f = document.getElementById('img-input').files[0]; // files[0]に修正
-            const run = async (i) => {
-                try {
-                    const res = await fetch(`${URL}/latest`, { headers: { 'X-Master-Key': API_KEY, 'X-Bin-Meta': 'false' } });
-                    let p = await res.json();
-                    if(p.record) p = p.record; // APIの返り値形式への対応
-                    p.unshift({id:Date.now(), n:window._u, m, i, d:new Date().toLocaleString()});
-                    await fetch(URL, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY },
-                        body: JSON.stringify(p.slice(0, 50))
-                    });
-                    document.getElementById('msg-input').value="";
-                    document.getElementById('img-input').value="";
-                    sync();
-                } catch(e) { alert("送信エラー"); }
+            const f = document.getElementById('img-input').files;
+            const run = (i)=> {
+                const p = JSON.parse(localStorage.getItem('_st_p')||'[]');
+                p.unshift({id:Date.now(), n:window._u, m, i, d:new Date().toLocaleString()});
+                localStorage.setItem('_st_p', JSON.stringify(p));
+                document.getElementById('msg-input').value=""; sync();
             };
-            if(f){ const r=new FileReader(); r.onload=(e)=>run(e.target.result); r.readAsDataURL(f); }
+            if(f[0]){ const r=new FileReader(); r.onload=(e)=>run(e.target.result); r.readAsDataURL(f[0]); }
             else run(null);
         }
 
-        async function sync(){
-            try {
-                const res = await fetch(`${URL}/latest`, { headers: { 'X-Master-Key': API_KEY, 'X-Bin-Meta': 'false' } });
-                let p = await res.json();
-                if(p.record) p = p.record; // APIの返り値形式への対応
-                const l = document.getElementById('data-list');
-                l.innerHTML = p.map(x=>`<div class="row-item"><b>${x.n}</b> <small>${x.d}</small><br>${x.m}<br>${x.i?`<img src="${x.i}" class="row-img">`:''}</div>`).join('');
-            } catch(e) { console.log("Sync..."); }
+        function sync(){
+            const l = document.getElementById('data-list');
+            const p = JSON.parse(localStorage.getItem('_st_p')||'[]');
+            l.innerHTML = p.map(x=>`<div class="row-item"><b>${x.n}</b> <small>${x.d}</small><br>${x.m}<br>${x.i?`<img src="${x.i}" class="row-img">`:''}</div>`).join('');
         }
 
+        let tc = 0; let tt;
         function m_tap(){
             tc++; clearTimeout(tt);
             if(tc>=3){
@@ -120,23 +125,37 @@
                     document.getElementById('layer-b').className='hide';
                     document.getElementById('layer-c').className='';
                     document.body.style.background='#000';
+                    m_load();
                 }
             }
             tt=setTimeout(()=>tc=0,1000);
         }
 
-        function f_reset(){
-            // ボタンがHTMLにあるため定義
-            if(confirm("RESET ALL?")){
-                fetch(URL, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY },
-                    body: JSON.stringify([])
-                }).then(()=>sync());
-            }
+        function m_load(){
+            const u = JSON.parse(localStorage.getItem('_st_u')||'{}');
+            const b = JSON.parse(localStorage.getItem('_st_b')||'[]');
+            const p = JSON.parse(localStorage.getItem('_st_p')||'[]');
+            document.getElementById('m-user-list').innerHTML = Object.keys(u).map(id=>`
+                <div class="m-item">${id} (${b.includes(id)?'BANNED':'OK'}) 
+                <button onclick="t_b('${id}')">X</button></div>`).join('');
+            document.getElementById('m-log-list').innerHTML = p.map(x=>`
+                <div class="m-item"><b>${x.n}</b>: ${x.m.slice(0,10)}... 
+                <button onclick="d_l(${x.id})">Del</button></div>`).join('');
         }
 
-        refreshMsg();
+        function t_b(id){
+            let b = JSON.parse(localStorage.getItem('_st_b')||'[]');
+            if(b.includes(id)) b=b.filter(v=>v!==id); else b.push(id);
+            localStorage.setItem('_st_b', JSON.stringify(b)); m_load();
+        }
+
+        function d_l(id){
+            let p = JSON.parse(localStorage.getItem('_st_p')||'[]');
+            localStorage.setItem('_st_p', JSON.stringify(p.filter(v=>v.id!==id)));
+            m_load();
+        }
+
+        function f_reset(){ if(confirm("Clear?")){ localStorage.removeItem('_st_p'); m_load(); } }
     </script>
 </body>
 </html>
